@@ -1,21 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.py"
-    }
-  ],
   "functions": {
-    "api/index.py": {
+    "api/*.py": {
       "runtime": "python3.11",
       "maxDuration": 10
     }
-  }
+  },
+  "routes": [
+    { "src": "/scan", "dest": "/api/scan.py" },
+    { "src": "/generate-pdf", "dest": "/api/scan.py" },
+    { "src": "/(.*)", "dest": "/api/scan.py" }
+  ]
 }
