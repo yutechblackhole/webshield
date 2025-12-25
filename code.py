@@ -13,7 +13,7 @@ from reportlab.lib import colors
 from io import BytesIO
 from datetime import datetime
 
-app = Flask(__name__, template_folder='.', static_folder='static')
+app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 
 @app.errorhandler(Exception)
