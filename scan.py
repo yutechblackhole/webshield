@@ -6,7 +6,7 @@ def handler(request):
     Expects a JSON body like {"url": "https://example.com"} or a query `?url=...`.
     """
     try:
-        # Try to get JSON body (works with Vercel request object)
+        # Try to get JSON body k(works with Vercel request object)
         data = None
         try:
             data = request.get_json() if hasattr(request, "get_json") else None
