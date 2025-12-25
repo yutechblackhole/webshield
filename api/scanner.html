@@ -1,0 +1,251 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/vite.svg">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vulnerability Scanner for Web Applications</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="min-h-screen bg-gray-50">
+        <nav class="bg-indigo-600 text-white shadow-lg">
+          <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield h-8 w-8"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+                <span class="ml-2 text-xl font-bold">WebShield</span>
+              </div>
+              <div class="hidden md:flex items-center space-x-4">
+                <a class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700" href="/">Home</a>
+                <a class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700" href="/about">About</a>
+                <a class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700" href="/scanner">Scanner</a>
+              </div>
+              <div class="md:hidden flex items-center">
+                <button class="inline-flex items-center justify-center p-2 rounded-md hover:bg-indigo-700">☰</button>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 py-6">
+          <div class="space-y-8">
+            <section class="text-center">
+              <h1 class="text-4xl font-bold text-gray-900 mb-4">Vulnerability Scanner for Web Applications</h1>
+              <p class="text-xl text-gray-600">Enter a URL to scan for potential security vulnerabilities</p>
+            </section>
+
+            <section class="max-w-2xl mx-auto">
+              <form id="scanForm" class="space-y-4">
+                <div>
+                  <label for="url" class="block text-sm font-medium text-gray-700 mb-2">Target URL</label>
+                  <div class="flex gap-4">
+                    <input type="text" id="url" placeholder="https://example.com" class="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" value="">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">Start Scan</button>
+                  </div>
+                </div>
+              </form>
+            </section>
+
+            <section class="max-w-2xl mx-auto bg-gray-50 p-6 rounded-lg border border-gray-200">
+              <h2 class="text-lg font-semibold mb-4">Scanning Information</h2>
+              <p class="text-gray-600 text-sm">Our scanner checks for various vulnerabilities including:</p>
+              <ul class="mt-2 space-y-2 text-sm text-gray-600">
+                <li class="flex items-center">• SQL Injection vulnerabilities</li>
+                <li class="flex items-center">• Cross-Site Scripting (XSS)</li>
+                <li class="flex items-center">• Open ports and security misconfigurations</li>
+                <li class="flex items-center">• Missing security headers</li>
+              </ul>
+            </section>
+
+            <section class="max-w-2xl mx-auto">
+              <div id="results" class="mt-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-lg font-semibold">Scan Results</h3>
+                  <button id="downloadPdfBtn" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download PDF Report
+                  </button>
+                </div>
+                <!-- resultsContainer will be populated with styled cards -->
+                <div id="resultsContainer" class="space-y-4"></div>
+              </div>
+            </section>
+
+          </div>
+        </main>
+
+        <footer class="bg-gray-800 text-white mt-auto">
+          <div class="max-w-7xl mx-auto px-4 py-6">
+            <p class="text-center">© 2026 WebShield*Yutech.Blackhole. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+      let currentScanResults = [];
+      let currentScanUrl = '';
+
+      // Map a raw result string to a category/title and severity
+      function categorizeResult(text) {
+        const t = text.toLowerCase();
+        if (t.includes('sql')) return { title: 'SQL Injection', severity: t.includes('no') || t.includes('not found') ? 'ok' : (t.includes('detected')||t.includes('vulnerab') ? 'warn' : 'info') };
+        if (t.includes('xss') || t.includes('cross-site') || t.includes('cross site')) return { title: 'XSS (Cross-Site Scripting)', severity: t.includes('potential')||t.includes('detected')||t.includes('vulnerab') ? 'warn' : 'ok' };
+        if (t.includes('robots') || t.includes('directory') || t.includes('found') || t.includes('uploads')) return { title: 'Directory / Discovery', severity: t.includes('found') ? 'info' : 'ok' };
+        if (t.includes('phpinfo') || t.includes('.env') || t.includes('config') || t.includes('exposed')) return { title: 'Security Misconfiguration', severity: t.includes('exposed')||t.includes('missing')||t.includes('vulnerab') ? 'warn' : 'ok' };
+        if (t.includes('csrf')) return { title: 'CSRF', severity: t.includes('detected') ? 'warn' : 'ok' };
+        if (t.includes('ssrf')) return { title: 'SSRF', severity: t.includes('detected') ? 'warn' : 'ok' };
+        if (t.includes('rfi')) return { title: 'RFI', severity: t.includes('detected') ? 'warn' : 'ok' };
+        if (t.includes('certificate') || t.includes('ssl') || t.includes('tls')) return { title: 'SSL/TLS', severity: t.includes('error') ? 'warn' : 'ok' };
+        if (t.includes('missing') || t.includes('content-security-policy') || t.includes('security header')) return { title: 'Security Headers', severity: 'warn' };
+        if (t.includes('error') || t.includes('forbidden') || t.includes('not found')) return { title: 'Request', severity: 'warn' };
+        return { title: 'Scan Info', severity: t.includes('no') ? 'ok' : 'info' };
+      }
+
+      function severityColor(sev) {
+        if (sev === 'ok') return 'rgb(16, 185, 129)'; // green
+        if (sev === 'warn') return 'rgb(239, 68, 68)'; // red
+        return 'rgb(59, 130, 246)'; // blue/info
+      }
+
+      function severityIcon(sev) {
+        if (sev === 'ok') return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle h-6 w-6 text-green-500 mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m9 11 3 3L22 4"></path></svg>`;
+        if (sev === 'warn') return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle h-6 w-6 text-red-500 mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>`;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info h-6 w-6 text-indigo-600 mr-2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
+      }
+
+      function renderCard(title, message, severity) {
+        const color = severityColor(severity);
+        const icon = severityIcon(severity);
+        return `
+          <div class="bg-white p-4 rounded-lg shadow-md" style="border-left:4px solid ${color};">
+            <div class="flex items-start">
+              ${icon}
+              <div>
+                <h3 class="text-lg font-semibold">${title}</h3>
+                <p class="text-gray-600">${message}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Download PDF report
+      document.getElementById('downloadPdfBtn').addEventListener('click', async function() {
+        if (!currentScanUrl || currentScanResults.length === 0) {
+          alert('No scan results to download');
+          return;
+        }
+        
+        const btn = this;
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader h-5 w-5 mr-2 animate-spin inline-block"></svg> Generating...';
+        
+        try {
+          const response = await fetch('/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: currentScanUrl, results: currentScanResults })
+          });
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `scan_report_${new Date().getTime()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          } else {
+            alert('Failed to generate PDF');
+          }
+        } catch (err) {
+          alert('Error generating PDF: ' + err.message);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      });
+
+      // Scan form behaviour: POST to /scan and render styled result cards
+      document.getElementById('scanForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const url = document.getElementById('url').value;
+        const button = event.target.querySelector('button');
+        const resultsDiv = document.getElementById('results');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        button.disabled = true;
+        const origText = button.innerHTML;
+        button.textContent = 'Scanning...';
+        resultsContainer.innerHTML = '';
+        resultsDiv.classList.add('hidden');
+        const floatingBtn = document.getElementById('downloadPdfFloating');
+        if (floatingBtn) floatingBtn.classList.add('hidden');
+
+        try {
+          const response = await fetch('/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+          });
+          const data = await response.json();
+          if (response.ok && data.results && data.results.length) {
+            // Store results for PDF download
+            currentScanResults = data.results;
+            currentScanUrl = data.url;
+            
+            // Convert backend result strings into styled cards
+            const cards = data.results.map(txt => {
+              const meta = categorizeResult(txt);
+              return renderCard(meta.title, txt, meta.severity);
+            }).join('');
+            resultsContainer.innerHTML = cards;
+            resultsDiv.classList.remove('hidden');
+            const floatingBtn = document.getElementById('downloadPdfFloating');
+            if (floatingBtn) floatingBtn.classList.remove('hidden');
+          } else if (response.ok) {
+            resultsContainer.innerHTML = '<div class="text-gray-600">No results returned.</div>';
+            resultsDiv.classList.remove('hidden');
+            const floatingBtn = document.getElementById('downloadPdfFloating');
+            if (floatingBtn) floatingBtn.classList.remove('hidden');
+          } else {
+            alert(data.error || 'Scan failed');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        } finally {
+          button.disabled = false;
+          button.innerHTML = origText;
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<!-- Floating PDF download button (visible when scan results present) -->
+<button id="downloadPdfFloating" class="hidden" style="position:fixed;right:18px;bottom:18px;z-index:9999;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;background:#16a34a;color:#fff;border-radius:8px;border:none;box-shadow:0 6px 18px rgba(0,0,0,0.12);">
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+  <span style="font-weight:600">Download PDF</span>
+</button>
+
+<script>
+  // Forward floating button click to main download handler
+  const floatBtn = document.getElementById('downloadPdfFloating');
+  if (floatBtn) {
+    floatBtn.addEventListener('click', function() {
+      const btn = document.getElementById('downloadPdfBtn');
+      if (btn) btn.click();
+    });
+  }
+</script>
