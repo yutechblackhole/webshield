@@ -1,8 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/scan", "dest": "/api/index.py" },
-    { "src": "/generate-pdf", "dest": "/api/index.py" },
-    { "src": "/(.*)", "dest": "/api/index.py" }
-  ]
-}
